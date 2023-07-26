@@ -11,7 +11,6 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Database from '../Database';
 
 const HomeScreen = () => {
@@ -103,10 +102,6 @@ const HomeScreen = () => {
   };
 
   return (
-    // <KeyboardAwareScrollView
-    //   contentContainerStyle={{ flexGrow: 1 }}
-    //   keyboardShouldPersistTaps="handled"
-    // >
       <View style={styles.container}>
         <Text style={styles.title}>Gestion de stock de médicaments</Text>
 
@@ -196,9 +191,7 @@ const HomeScreen = () => {
     style={styles.deleteButton}
   />
 </View>
-              {/* <TouchableOpacity onPress={() => deleteMedicine(item.id)}>
-                <Text style={styles.deleteButtonText}>Supprimer</Text>
-              </TouchableOpacity> */}
+
             </View>
           )}
         />
@@ -389,15 +382,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'blue',
     borderRadius: 5,
     padding: 10,
-    flex: 1, // Pour que les boutons aient une taille égale
-    marginRight: 5, // Espacement entre les boutons
+    flex: 1, 
+    marginRight: 5, 
   },
   deleteButton: {
-    backgroundColor: 'red', // Changer la couleur de fond en rouge
+    backgroundColor: 'red', 
     borderRadius: 5,
     padding: 10,
-    flex: 1, // Pour que les boutons aient une taille égale
-    marginLeft: 5, // Espacement entre les boutons
+    flex: 1, 
+    marginLeft: 5, 
   },
 });
 export default HomeScreen;
