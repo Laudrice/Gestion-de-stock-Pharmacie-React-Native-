@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import {MaterialIcons} from "@expo/vector-icons";
 import {
   View,
   Text,
-  StatusBar,
   FlatList,
   TextInput,
   TouchableOpacity,
@@ -12,6 +12,16 @@ import {
   Modal,
 } from 'react-native';
 import Database from '../Database';
+import {Picker} from '@react-native-picker/picker';
+import { Formik } from 'formik';
+import { AppRegistry, YellowBox } from 'react-native';
+import App from './../App';
+
+YellowBox.ignoreWarnings(['Warning: React.jsx']);
+
+console.disableYellowBox = true;
+
+AppRegistry.registerComponent('MyApp', () => App);
 
 const HomeScreen = () => {
   const [medicines, setMedicines] = useState([]);
@@ -24,9 +34,50 @@ const HomeScreen = () => {
   const [newMedicinePrice, setNewMedicinePrice] = useState('');
   const [newMedicineDate_exp, setNewMedicineDate_exp] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalVisible2, setIsModalVisible2] = useState(false);
   const [selectedAction, setSelectedAction] = useState('');
   const [selectedMedicineId, setSelectedMedicineId] = useState(null);
+  const [selectedMedicine, setSelectedMedicine] = useState({
+    name: '',
+    description: '',
+    unity: '',
+    stock: '',
+    price: '',
+    date_exp: '',
+  });
   const [isAddingMedicine, setIsAddingMedicine] = useState(false);
+  
+  const [showFindResult, setShowFindResult] = useState(false);
+  const [medicinesFind, setMedicinesFind] = useState([]);
+  const [find, setFind] = useState('');
+  const [FindResult, setFindResult] = useState('');
+  const [selectedValue, setSelectedValue] = useState('all');
+  //Modification
+  const [editMedicineName, setEditMedicineName] = useState("");
+  const [editMedicineDescription, setEditMedicineDescription] = useState("");
+  const [editMedicineUnity, setEditMedicineUnity] = useState("");
+  const [editMedicineStock, setEditMedicineStock] = useState("");
+  const [editMedicinePrice, setEditMedicinePrice] = useState("");
+  const [editMedicineDate_exp, setEditMedicineDate_exp] = useState("");
+
+  const handleValueChange = (itemValue, itemIndex) =>{
+    setSelectedValue(itemValue);
+    if(selectedValue == 'expired'){
+      setShowFindResult(true);
+      setMedicinesFind(medicines.filter((med)=>new Date(med.date_exp)>new Date()));
+    }else if(selectedValue=="notExpired"){
+      setShowFindResult(true);
+      setMedicinesFind(medicines.filter((med)=>new Date(med.date_exp)<=new Date()));
+    }else{
+      setShowFindResult(false);
+    }
+  };
+
+  const handleFind=()=>{
+    setShowFindResult(true);
+    setMedicinesFind(medicines.filter((med)=>med.name.toLowerCase().includes(find.toLowerCase())));
+  }
+
 
   const isExpired = (date) => {
     const currentDate = new Date();
@@ -61,8 +112,25 @@ const HomeScreen = () => {
   };
 
   const deleteMedicine = (id) => {
-    Database.deleteMedicine(id);
-    Database.getAllMedicines((medicines) => setMedicines(medicines));
+    Alert.alert(
+      'Confirmation',
+      'Voulez-vous supprimer ce médicament?',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            Database.deleteMedicine(id);
+            Database.getAllMedicines((medicines) => setMedicines(medicines));
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   const inputMed = (id, qte) => {
@@ -83,6 +151,9 @@ const HomeScreen = () => {
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
   };
+  const toggleModal2 = () => {
+    setIsModalVisible2(!isModalVisible2);
+  };
 
   const handleActionSubmit = () => {
     if (selectedAction === 'entrée') {
@@ -97,22 +168,93 @@ const HomeScreen = () => {
     setIsModalVisible(false);
   };
 
+  const handleEditSubmit = (values) => {
+   // console.log(values,selectedMedicineId);
+    Database.updateMedicine(values.id, values.name, values.description,values.unity,  parseInt(values.price) , parseInt(values.stock) , values.date_exp);
+    setIsModalVisible2(false);
+    Database.getAllMedicines((medicines) => setMedicines(medicines));
+  };
+
   const toggleAddingMedicine = () => {
     setIsAddingMedicine(!isAddingMedicine);
+  };
+  const initialValues = {
+    id: selectedMedicine.id,
+    name: selectedMedicine.name, 
+    description:selectedMedicine.description,
+    unity:selectedMedicine.unity,
+    stock:selectedMedicine.stock.toString(),
+    price:selectedMedicine.price.toString(),
+    date_exp:selectedMedicine.date_exp  , 
   };
 
   return (
       <View style={styles.container}>
-        <Text style={styles.title}>Gestion de stock de médicaments</Text>
+        <Text style={styles.title}>Pharmacie</Text>
 
         {!isAddingMedicine && (
-          <TouchableOpacity style={styles.addButton} onPress={toggleAddingMedicine}>
-            <Text style={styles.addButtonText}>Ajouter</Text>
-          </TouchableOpacity>
+          <View>
+          {showFindResult && <MaterialIcons
+           name='arrow-back' 
+            size={25}
+            onPress={()=>{setShowFindResult(false)}}
+          />}
+          {/* {showFindResult &&  <Button title='Afficher tout' onPress={()=>{setShowFindResult(false)}}/>} */}
+            <View style={{flexDirection: 'row', 
+           alignItems: 'center', 
+            justifyContent: 'center', 
+          paddingHorizontal: 5,
+          paddingVertical: 4,}}> 
+              <TextInput
+                style={{ flex: 1, 
+                borderWidth: 1,
+                borderColor: '#ccc',
+                padding: 8,
+                marginRight: 8,
+                borderRadius:20}}
+                placeholder="Saisissez le médicament..."
+                value={find}
+                onChangeText={setFind}
+              /> 
+              <TouchableOpacity onPress={handleFind} style={{marginLeft:10, borderWidth:1,padding:5,borderRadius:15,borderColor:"#ccc"}}>
+                  <MaterialIcons
+                    name='search'
+                    size={30}
+                  />
+              </TouchableOpacity>
+            </View> 
+            <View style={{borderWidth: 1,
+            borderColor: '#ccc',
+            borderRadius:20,
+            size:1}}>
+            <Picker 
+                selectedValue={selectedValue}
+                style={styles.picker}
+                value="all"
+                onValueChange={handleValueChange}
+              >
+                <Picker.item label="Selectionner" value=""/>
+                <Picker.item label="Expiré" value="expired"/>
+                <Picker.item label="Non expiré" value="notExpired"/>
+              </Picker>
+            </View>
+            
+            
+
+            <TouchableOpacity    style={{flexDirection:"row",justifyContent:"center",marginTop:10, marginHorizontal:10, textAlign:"center",backgroundColor:"#969696",borderColor:"f2f2f2",padding:10,borderRadius:10,marginBottom:15}} onPress={toggleAddingMedicine}>
+             <Text style={{color:"white",textAlign:"center"}}>Nouveau Médicament</Text> 
+              {/* <MaterialIcons 
+                name="add"
+                size={20}
+                color="white"
+              /> */}
+            </TouchableOpacity>
+          </View> 
         )}
 
         {isAddingMedicine && (
           <View style={styles.addMedicineContainer}>
+            <Text style={{fontSize:20,fontWeight:"bold",marginVertical:10,textAlign:'center'}}>Nouveau Médicament:</Text>
             <TextInput
               style={styles.input}
               placeholder="Nom du médicament"
@@ -154,13 +296,13 @@ const HomeScreen = () => {
             <TouchableOpacity style={styles.addButton} onPress={addMedicine}>
               <Text style={styles.addButtonText}>Valider</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.addButton} onPress={toggleAddingMedicine}>
-              <Text style={styles.addButtonText}>Annuler</Text>
+            <TouchableOpacity style={styles.actionCancelButton} onPress={toggleAddingMedicine}>
+              <Text style={styles.actionCancelButtonText}>Annuler</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        <FlatList
+       {!showFindResult && <FlatList
           style={styles.medicinesList}
           data={medicines}
           keyExtractor={(item) => item.id.toString()}
@@ -174,28 +316,83 @@ const HomeScreen = () => {
               <Text>
                 Date d'expiration: {item.date_exp} {isExpired(item.date_exp) ? 'Expiré' : 'Non expiré'}
               </Text>
+              <Text style={{ marginVertical: 1 }}></Text>
               <View style={styles.operations}>
-  <Button
-    title="Opération"
-    onPress={() => {
-      setSelectedMedicineId(item.id);
-      toggleModal();
-    }}
-    style={styles.operationButton}
-  />
-  <Button
-    title="Delete"
-    onPress={() => {
-      deleteMedicine(item.id);
-    }}
-    style={styles.deleteButton}
-  />
-</View>
+                <TouchableOpacity   onPress={() => {
+                    setSelectedMedicineId(item.id);
+                    toggleModal();
+                  }}
+                  style={styles.operationButton}>
+                <Text style={styles.actionCancelButtonText}>Opération</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity  style={styles.actionEditButton}  onPress={() => {
+                    setSelectedMedicineId(item.id);
+                    setSelectedMedicine(item);
+                    toggleModal2();
+                  }}
+                 >
+                 <Text style={styles.actionCancelButtonText}>Modifier</Text>
+                
+                </TouchableOpacity>
+                <TouchableOpacity  
+                style={styles.actionCancelButton}
+                 onPress={() => {
+                    deleteMedicine(item.id);
+                  }}
+                 >
+                    <Text style={styles.actionCancelButtonText}>Supprimer</Text>
+                </TouchableOpacity>
+              </View>
 
             </View>
           )}
-        />
+        />}
+       {showFindResult && <FlatList
+          style={styles.medicinesList}
+          data={medicinesFind}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.medicineItem}>
+              <Text style={styles.medicineName}>{item.name}</Text>
+              <Text>Description: {item.description}</Text>
+              <Text>Unité: {item.unity}</Text>
+              <Text>Stock: {item.stock}</Text>
+              <Text>Prix: {item.price}</Text>
+              <Text>
+                Date d'expiration: {item.date_exp} {isExpired(item.date_exp) ? 'Expiré' : 'Non expiré'}
+              </Text>
+              <Text style={{ marginVertical: 1 }}></Text>
+              <View style={styles.operations}>
+                <TouchableOpacity  onPress={() => {
+                    setSelectedMedicineId(item.id);
+                    toggleModal();
+                  }}
+                  style={styles.operationButton}>
+                  <Text style={styles.actionCancelButtonText}>Opération</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                style={styles.actionEditButton}
+                onPress={() => {
+                    setSelectedMedicineId(item.id);
+                    setSelectedMedicine(item);
+                    toggleModal2();
+                  }}>
+                  <Text style={styles.actionCancelButtonText}>Modifier</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                 onPress={() => {
+                    deleteMedicine(item.id);
+                  }}
+                  style={styles.actionCancelButton}>
+                  <Text style={styles.actionCancelButtonText}>Supprimer</Text>
+                </TouchableOpacity>
+                
+              </View>
 
+            </View>
+          )}
+        />}
         <Modal animationType="slide" transparent={true} visible={isModalVisible}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
@@ -254,21 +451,94 @@ const HomeScreen = () => {
             </View>
           </View>
         </Modal>
+        <Modal animationType="slide" transparent={true} visible={isModalVisible2}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Modfication</Text>
+                <Formik
+                    initialValues={initialValues}
+                    onSubmit={handleEditSubmit}
+                  >
+                    {({ handleChange, handleBlur, handleSubmit, values }) => (
+                      <View>
+                      <Text>Nom</Text>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="Name"
+                          onChangeText={handleChange('name')}
+                          onBlur={handleBlur('name')}
+                          value={values.name}
+                        />
+                        <Text>Description</Text>
+                         <TextInput
+                          style={styles.input}
+                          placeholder="description"
+                          onChangeText={handleChange('description')}
+                          onBlur={handleBlur('description')}
+                          value={values.description}
+                        />
+                        <Text>Unité</Text>
+                         <TextInput
+                          style={styles.input}
+                          placeholder="unity"
+                          onChangeText={handleChange('unity')}
+                          onBlur={handleBlur('unity')}
+                          value={values.unity}
+                        />
+                        <Text>Stock</Text>
+                         <TextInput
+                          style={styles.input}
+                          placeholder="stock"
+                          onChangeText={handleChange('stock')}
+                          onBlur={handleBlur('stock')}
+                          value={values.stock}
+                          keyboardType="numeric"
+                        />
+                        <Text>Prix</Text>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="price"
+                          onChangeText={handleChange('price')}
+                          onBlur={handleBlur('price')}
+                          value={values.price}
+                          keyboardType="numeric"
+                        />
+                        <Text>Date d'expiration</Text>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="YYYY-MM-DD"
+                          onChangeText={handleChange('date_exp')}
+                          onBlur={handleBlur('date_exp')}
+                          value={values.date_exp}
+                        />
+                        <Button title="Modifier" onPress={handleSubmit} style={{ marginVertical: 10 }}/>
+                        <Text></Text>
+                        <TouchableOpacity style={styles.actionCancelButton} onPress={toggleModal2}>
+                               <Text style={styles.actionCancelButtonText}>Annuler</Text>
+                         </TouchableOpacity>
+                      </View>
+                    )}
+                  </Formik>
+            </View>
+          </View>
+        </Modal>
       </View>
-    // </KeyboardAwareScrollView>
   );
 };
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 30,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+    width: '100%',
+    color: 'white',
+    paddingVertical:10,
+    backgroundColor: '#494949'
+    
   },
   addButton: {
     backgroundColor: 'blue',
@@ -304,7 +574,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: 'whire',
     fontWeight: 'bold',
-    backgroundColor: 'red',
+    backgroundColor: '#d83232',
   },
   modalContainer: {
     flex: 1,
@@ -316,7 +586,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
-    alignItems: 'center',
+    width: '80%',
   },
   modalTitle: {
     fontSize: 18,
@@ -328,7 +598,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   actionButton: {
-    backgroundColor: 'blue',
+    backgroundColor: '#2795c0',
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginHorizontal: 5,
+  },
+  actionEditButton: {
+    backgroundColor: '#1d9c43',
     borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -352,7 +629,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   actionSubmitButton: {
-    backgroundColor: 'blue',
+    backgroundColor: '#1d9c43',
     borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -362,7 +639,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   actionCancelButton: {
-    backgroundColor: 'red',
+    backgroundColor: '#d83232',
     borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -371,26 +648,36 @@ const styles = StyleSheet.create({
   actionCancelButtonText: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 
   operations: {
+    marginTop:8,
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-around',
     marginBottom: 10,
   },
   operationButton: {
-    backgroundColor: 'blue',
+    backgroundColor: '#2795c0',
     borderRadius: 5,
     padding: 10,
     flex: 1, 
     marginRight: 5, 
   },
   deleteButton: {
-    backgroundColor: 'red', 
+    backgroundColor: '#d83232', 
     borderRadius: 5,
     padding: 10,
     flex: 1, 
     marginLeft: 5, 
+  },
+  input: {
+    borderWidth: 0.8, 
+    borderColor: '#ccc', 
+    borderRadius: 5,
+    padding: 3,
+    marginBottom: 10,
+    fontSize: 14, 
   },
 });
 export default HomeScreen;
