@@ -225,7 +225,8 @@ const HomeScreen = () => {
             </View> 
             <View style={{borderWidth: 1,
             borderColor: '#ccc',
-            borderRadius:20,
+            borderRadius:10,
+            marginHorizontal: 8,
             size:1}}>
             <Picker 
                 selectedValue={selectedValue}
@@ -314,7 +315,7 @@ const HomeScreen = () => {
               <Text>Stock: {item.stock}</Text>
               <Text>Prix: {item.price}</Text>
               <Text>
-                Date d'expiration: {item.date_exp} {isExpired(item.date_exp) ? 'Expiré' : 'Non expiré'}
+                Date d'expiration: {item.date_exp} {isExpired(item.date_exp) ? '(Expiré)' : '(Non expiré)'}
               </Text>
               <Text style={{ marginVertical: 1 }}></Text>
               <View style={styles.operations}>
@@ -360,7 +361,7 @@ const HomeScreen = () => {
               <Text>Stock: {item.stock}</Text>
               <Text>Prix: {item.price}</Text>
               <Text>
-                Date d'expiration: {item.date_exp} {isExpired(item.date_exp) ? 'Expiré' : 'Non expiré'}
+                Date d'expiration: {item.date_exp} {isExpired(item.date_exp) ? '(Expiré)' : '(Non expiré)'}
               </Text>
               <Text style={{ marginVertical: 1 }}></Text>
               <View style={styles.operations}>
@@ -675,7 +676,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.8, 
     borderColor: '#ccc', 
     borderRadius: 5,
-    padding: 3,
+    padding: 3, 
     marginBottom: 10,
     fontSize: 14, 
   },
